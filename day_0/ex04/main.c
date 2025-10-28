@@ -4,23 +4,23 @@
 
 void set_led_state(int mask, bool state) {
     if (state)
-        PORTB |= (1 << mask);
+        PORTB |= (1 << mask); //! ON
     else
-        PORTB &= ~(1 << mask);
+        PORTB &= ~(1 << mask); //! OFF
 }
 
 void decimal_to_binary(int n, char *binary, int size) {
     for (int i = 0; i < size; i++) {
-        binary[i] = (n >> i) & 1;
+        binary[i] = (n >> i) & 1;   //? Binary mask
     }
 }
 
 void binary_display(char *binary) {
-    PORTB = 0x00;
-    if (binary[0])
+    PORTB = 0x00; //! RESET ALL 4 LEDs
+    if (binary[0]) 
         set_led_state(PB0, true);
     if (binary[1])
-        set_led_state(PB1, true);
+        set_led_state(PB1, true);                   //! LOOK BIT IN BINARY TAB AND SET THE LED ON/OFF
     if (binary[2])
         set_led_state(PB2, true);
     if (binary[3])
