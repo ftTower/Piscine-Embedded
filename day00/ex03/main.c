@@ -1,11 +1,14 @@
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdbool.h>
+// #include <stdbool.h>
+
+#define true 1
+#define false 0
 
 int main() {
 
     
-    bool led_state = false;
+    int led_state = false;
 
     DDRB = 0xFF; //! SET LED DIRECTION IN OUTPUT
     DDRD &= ~(1 << PD2); //! SET BUTON DIRECTION IN INPUT

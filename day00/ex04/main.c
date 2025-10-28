@@ -1,8 +1,11 @@
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdbool.h>
+// #include <stdbool.h>
 
-void set_led_state(int mask, bool state) {
+#define true 1 
+#define false 0
+
+void set_led_state(int mask, int state) {
     if (state)
         PORTB |= (1 << mask); //! ON
     else
@@ -50,7 +53,7 @@ int main() {
     int value = 0;
     char binary[4] = {0};
     
-    animation(binary);
+    // animation(binary);
     
     DDRB = 0xFF; //! SET LED DIRECTION IN OUTPUT
     DDRD &= ~(1 << PD2); //! SET SW1 BUTON DIRECTION IN INPUT
