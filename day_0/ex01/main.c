@@ -4,8 +4,7 @@
 
 int main() {
 
-    DDRB |= (1 << PB0); // Configure PB0 as output
-
+    DDRB |= (1 << PB0);
     PORTB |= (1 << PB0);
 
 }
