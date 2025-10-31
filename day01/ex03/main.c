@@ -8,13 +8,6 @@
 #define DUTY_CYCLE_MIN 1562
 #define DUTY_CYCLE_MAX 15624
 
-
-void    decimal_to_binary(int n, char *binary, int size) {
-    for (int i = 0; i < size; i++) {
-        binary[i] = (n >> i) & 1;   //? Binary mask
-    }
-}
-
 void    set_bit(volatile uint8_t *regis, uint8_t bit, int state) {
     if (state)
         *regis |= (1 << bit); //! PUT REGISTER BIT TO HIGH

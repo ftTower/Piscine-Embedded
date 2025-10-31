@@ -49,7 +49,8 @@ clean:
 	@echo "$(COLOR_RED)Cleaning up generated files: $(TARGET).hex and $(TARGET).bin$(COLOR_RESET)"
 	rm -f $(TARGET).hex $(TARGET).bin
 
-screen: 
+screen:
+	sleep 1
 	screen $(PORT) 115200
 
 

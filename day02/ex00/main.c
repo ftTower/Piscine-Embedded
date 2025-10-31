@@ -2,6 +2,7 @@
 #include "util/delay.h"
 #include "avr/interrupt.h"
 
+#define UART_BAUDRATE 115200UL
 #define UBRR_HIGH_PRECISION ((F_CPU / (UART_BAUDRATE * 8UL)) - 1)
 
 void    uart_init() {
