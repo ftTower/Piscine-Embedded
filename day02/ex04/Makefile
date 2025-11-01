@@ -25,7 +25,7 @@ LDFLAGS = -mmcu=$(MCU)
 PROGRAMMER = arduino
 PORT = /dev/ttyUSB0
 
-all: clear hex flash clean
+all: clear hex flash clean screen
 
 # ! HEX : COMPILATION & CONVERSION
 hex: $(TARGET).hex
