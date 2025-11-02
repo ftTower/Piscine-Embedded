@@ -42,16 +42,11 @@ void uart_tx(char c) {
     UDR0 = c;
 }
 
-void uart_printstr(char *str, int lignfeed_bool) {
+void uart_printstr(volatile char *str, int lignfeed_bool) {
     if (!str)
         return ;
-    while (*str)
-        if (*str == '\n') {
-            uart_tx('\n');
-            uart_tx('\r');
-        }    
-        else
-            uart_tx(*str++);
+    while (*str && *str != '\r' && *str != '\n')  
+        uart_tx(*str++);
     if (lignfeed_bool) {
         uart_tx('\n');
         uart_tx('\r');
@@ -59,8 +54,9 @@ void uart_printstr(char *str, int lignfeed_bool) {
 }
 
 void uart_delete_last_line(void) {
-    uart_printstr("\033[A\033[2K\r", false);
-}
+    uart_tx('\r'); 
+    // Efface la ligne entière (ANSI \033[2K)
+    uart_printstr("\033[2K", false); }
 
 char uart_rx(void) {
     while(!(UCSR0A & (1<<RXC0)));
@@ -69,8 +65,10 @@ char uart_rx(void) {
 
 // ! ======================= INTERRUPTS ============================================//
 
-char buffer[25];
-volatile uint8_t index;
+#define BUFFER_SIZE 25
+
+volatile char buffer[BUFFER_SIZE];
+volatile uint8_t i;
 
 void USART_RX_vect(void) __attribute__ ((signal, used));
 
@@ -78,31 +76,24 @@ void USART_RX_vect(void) { //! INTERRUPTION
     char received = UDR0;
     
     if (received == 10) {
-        if (index < 24)
-            buffer[index] = received;
+        if (i < BUFFER_SIZE) {
+            buffer[i] = '\0';
+        }
     }
-    if (received == 13){
+    else if ((received == 8 || received == 127) && i > 1){
+        i--;
+        buffer[i] = '.';
     }
-    if ((received == 8 || received == 127) && index > 0){
-        index--;
-        buffer[index] = '.';
+    else if (i < BUFFER_SIZE) {
+        buffer[i] = received;
+        i++;
     }
-    else if (index < 24) {
-        buffer[index] = received;
-        index++;
-    }
-        
-    // uart_printstr(buffer_username, true);
-    // uart_printstr(buffer_password, true);
-    
-    
-    // uart_tx(received);
 }
 
 // ! ======================= UTILS ============================================//
 
 
-unsigned int ft_strlen(char *str){
+unsigned int ft_strlen(volatile char *str){
     unsigned int len = 0;
     while(*str) {
         len++;
@@ -111,55 +102,46 @@ unsigned int ft_strlen(char *str){
     return (len);
 }
 
-void mem_zero(char *buffer, char c, int size) {
+void mem_zero(volatile char *buffer, char c, int size) {
     if (!buffer || size <= 0)
         return ;
-    for (int i = 0; i < size; i++)
-        buffer[i] = c;
+    for (int j = 0; j < size - 1; j++)
+        buffer[j] = c;
 }
 
-int is_char(char *buffer, char c) {
-    unsigned int len = ft_strlen(buffer);
-    for (unsigned int i = 0;  i < len; i++) 
-        if (buffer[i] == c)
-            return true;
-    return false;
-}
-
-int key_cmp(char *buffer, char *key) {
-    for (int i = 0; buffer[i] && key[i]; i++) {
-        if (buffer[i] != key[i])
-            return false;
-    }
-
-    return true;
-}
-
-int buffer_init(char *buffer, int buffer_size) {
+int buffer_init(volatile char *buffer, int buffer_size) {
     if (!buffer || buffer_size <= 0)
         return true;
+    mem_zero(buffer, '.', buffer_size);
     buffer[buffer_size - 1] = '\0';
-    mem_zero(buffer, '.', buffer_size - 1);
     return false;
 }
 
 // ! ======================= WOPR ============================================//
 
 
-int prompt(char *prompt, char *buffer, char *key) {
-    set_bit(&SREG, 7, true); //! ACTIVATE ALL INTERRUPTIONS ON MICROCONTROLER
+int prompt(char *prompt, volatile char *buffer, char *key) {
+    i = 0;
     while (1) {
-        uart_printstr(prompt, false);
-        uart_printstr(buffer, true);
         
-        if (is_char(buffer, '\n'))
+        if (buffer[i] == '\0')
             break;
-
-        _delay_ms(10);
-        uart_delete_last_line();
+        else {
+            uart_delete_last_line();
+            uart_printstr(prompt, false);
+            uart_printstr(buffer, false);
+    
+            _delay_ms(50);
+        }
+        
     }
-    set_bit(&SREG, 7, false); //! DEACTIVATE ALL INTERRUPTIONS ON MICROCONTROLER
+    
+    uart_delete_last_line();
+    uart_printstr(prompt, false);
+    uart_printstr(buffer, true);
+    buffer_init(buffer, BUFFER_SIZE);
 
+    //? RETURN TRUE IF KEY == BUFFER
 
     return false;
 }
@@ -167,39 +149,37 @@ int prompt(char *prompt, char *buffer, char *key) {
 int login(char *username, char *password) {
     uart_printstr("Enter your login:", true);
     
-    int ret = prompt("\tusername: ", buffer, username);
+    set_bit(&SREG, 7, true); //! ACTIVATE ALL INTERRUPTIONS ON MICROCONTROLER
+
+
+    int ret_user = prompt("\tusername: ", buffer, username);
     
-    mem_zero(buffer, '.', 25);
-    index = 0;
+    // _delay_ms(500);
 
-    uart_printstr("\n\r", false);
-    uart_printstr("\n\r", false);
+    int ret_pass = prompt("\tpassword: ", buffer, password);
 
-    if (prompt("\tpassword: ", buffer, password) || ret)
-        return true;
+    if (ret_user || ret_pass)
+        return set_bit(&SREG, 7, false), true;
 
     return false;
 }
 
 
 // ! ======================= MAIN ============================================//
-
 int main()
 {
     uart_init();
     
-    index = 0;
-    buffer_init(buffer, 25);
-
-
-
+    buffer_init(buffer, BUFFER_SIZE);
 
     login("tauer", "pass123");
     
-    while (1)
-    {
+
+    uart_printstr("Bye, Bye ...", true);
+    // while (1)
+    // {
         
 
-    }
+    // }
     return 0;
 }
