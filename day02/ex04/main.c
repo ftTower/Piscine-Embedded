@@ -80,11 +80,10 @@ void USART_RX_vect(void) { //! INTERRUPTION
             buffer[i] = '\0';
         }
     }
-    else if ((received == 8 || received == 127) && i > 1){
+    else if ((received == 8 || received == 127) && i > 0){
         i--;
-        buffer[i] = '.';
     }
-    else if (i < BUFFER_SIZE) {
+    else if (i < BUFFER_SIZE - 1) {
         buffer[i] = received;
         i++;
     }
