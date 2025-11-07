@@ -9,6 +9,23 @@
 #define LED_GREEN PD6
 #define LED_BLUE PD3
 
+#define BUFFER_SIZE 8
+
+volatile char buffer[BUFFER_SIZE] = {'.'};
+volatile uint8_t index_buffer;
+
+
+char to_upper(int c) {
+    if (c >= 'a' && c <= 'z')
+        return (c - 32);
+    return (c);
+}
+
+int	is_hexa(int c)
+{
+    return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'));
+}
+
 //! ============================= UART ===============================
 
 #define UART_BAUDRATE 115200UL
@@ -31,10 +48,33 @@ void uart_tx(char c) {
     UDR0 = c;
 }
 
+void uart_printstr(volatile char *str, int lignfeed_bool) {
+    if (!str)
+    return ;
+    while (*str && *str != '\r' && *str != '\n')  
+    uart_tx(*str++);
+    if (lignfeed_bool) {
+        uart_tx('\n');
+        uart_tx('\r');
+    }
+}
+
+void uart_delete_last_line(void) {
+    uart_printstr("\033[1A\033[2K", false);
+    uart_tx('\r');
+}
+
 char uart_rx(void) {
     while(!(UCSR0A & (1<<RXC0)));
     return UDR0;
 }
+
+void clear_buffer(volatile char *buffer, int size) {
+    buffer[size - 1] = '\0'; 
+    for (unsigned int i = 0;buffer[i] && i < size; i++)
+        buffer[i] = 0;
+    index_buffer = 0;
+} 
 
 //! ============================= SETTERS ===============================
 
@@ -53,23 +93,13 @@ void set_rgb(uint8_t r, uint8_t g, uint8_t b) {
 
 //! ============================= UTILS ===============================
 
-unsigned int ft_strlen(const char *str) {
+unsigned int ft_strlen(volatile char *str) {
     unsigned int len = 0;
     if (!str)
         return len;
     while(*str++)
         len++;
     return len;
-}
-
-int format_checker(char *str) {
-    if (!str || str[0] != '#')
-        return false;
-    str++;
-    while (*str++)
-        if (*str < '0' || *str > '9')
-            return false;
-    return true;
 }
 
 //! ============================= RGB ===============================
@@ -88,7 +118,7 @@ void init_rgb() {
 
 }
 
-int hex_to_decimal(const char *hex)
+int hex_to_decimal(volatile char *hex)
 {
     int decimal = 0;
     int base = 1;
@@ -107,11 +137,11 @@ int hex_to_decimal(const char *hex)
     return decimal;
 }
 
-volatile uint8_t r = 0;
-volatile uint8_t g = 0;
-volatile uint8_t b = 0;
+void hex_rgb_splitter(volatile char *hex_string) {
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
 
-void hex_rgb_splitter(char *hex_string) {
     char buffer[3];
     buffer[2] = '\0';
     
@@ -126,27 +156,44 @@ void hex_rgb_splitter(char *hex_string) {
     buffer[0] = hex_string[5];
     buffer[1] = hex_string[6];
     b = hex_to_decimal(buffer); 
+
+    set_rgb(r, g, b);
 }
 
 //! ============================= MAIN ===============================
 
+void USART_RX_vect(void) __attribute__ ((signal, used));
+
+void USART_RX_vect(void) { //! INTERRUPTION
+    volatile char received = UDR0;
+    
+    if ((index_buffer == 0 && received == '#') || (index_buffer > 0 && index_buffer < BUFFER_SIZE - 1 && is_hexa(received))) {
+        buffer[index_buffer] = received;
+        index_buffer++;
+    }
+
+    if (index_buffer == BUFFER_SIZE - 1) {
+        hex_rgb_splitter(buffer);
+        clear_buffer(buffer, BUFFER_SIZE);
+    }
+
+}
+
 int main() {
+    clear_buffer(buffer, BUFFER_SIZE);
     
-    char buffer[] = "#000000";
-
     init_rgb();
+    uart_init();
+
+    uart_printstr("Use Format #RRGGBB", true);
     
-    // set_rgb(255, 255, 255);
+    set_bit(&SREG, 7, true); //! ACTIVATE ALL INTERRUPTIONS ON MICROCONTROLER
 
-    // // while (1) {
-        
-    // // }
-
-    // if (format_checker(buffer))
-    hex_rgb_splitter(buffer);
-    set_rgb(r, g, b);
-
-    
-
+    while (1) {
+        uart_printstr("Enter a color : ", false);
+        uart_printstr(buffer, true);
+        _delay_ms(20);
+        uart_delete_last_line();
+    }
     return 0;
 }

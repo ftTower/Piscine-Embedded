@@ -25,7 +25,7 @@ LDFLAGS = -mmcu=$(MCU)
 PROGRAMMER = arduino
 PORT = /dev/ttyUSB0
 
-all: clear hex flash clean
+all: clear hex flash clean screen
 
 # ! HEX : COMPILATION & CONVERSION
 hex: $(TARGET).hex
@@ -48,6 +48,10 @@ flash: $(TARGET).hex
 clean:
 	@echo "$(COLOR_RED)Cleaning up generated files: $(TARGET).hex and $(TARGET).bin$(COLOR_RESET)"
 	rm -f $(TARGET).hex $(TARGET).bin
+
+screen:
+	sleep 1
+	screen $(PORT) 115200
 
 clear : 
 	clear
