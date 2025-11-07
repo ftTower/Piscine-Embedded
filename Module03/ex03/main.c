@@ -18,14 +18,22 @@ void    set_bit(volatile uint8_t *regis, uint8_t bit, int state) {
 
 void init_rgb() {
 
-    DDRD |= ((1 << PD3) | (1 << PD5) | (1 << PD6));
+    DDRD |= ((1 << LED_BLUE) | (1 << LED_RED) | (1 << LED_GREEN)); //! LED PINS OUTPUT 
 
-    TCCR0A |= ((1 << COM0A1) | (1 << WGM00) | (1 << WGM01));
-    TCCR0B |= (1 << CS00);
+    //? TIMER 0
+    TCCR0A = ((1 << COM0A1) | (1 << COM0B1) | (1 << WGM00) | (1 << WGM01)); //* FAST PWM
+    TCCR0B = (1 << CS01) | (1 << CS00); //! PRESCALER /64
+
+    //? TIMER 2
+    TCCR2A = ((1 << COM2B1) | (1 << WGM20) | (1 << WGM21)); //* FAST PWM
+    TCCR2B = (1 << CS22); //! PRESCALER /64
+
 }
 
 void set_rgb(uint8_t r, uint8_t g, uint8_t b) {
-
+    OCR0B = r;
+    OCR0A = g;
+    OCR2B = b;
 }
 
 void wheel(uint8_t pos) {
@@ -47,24 +55,12 @@ int main() {
 
     init_rgb();
 
-    uint8_t pwm = 0x00;
-	int up = true;
-    
-	for(;;) {
-
-		OCR0A = pwm;
-
-		pwm += up ? 1 : -1;
-		if (pwm == 0xff)
-			up = false;
-		else if (pwm == 0x00)
-			up = true;
-
-		_delay_ms(10);
-	}
-
     while (1) {
 
+        for (uint8_t pos = 0; pos < 256; pos++) {
+            wheel(pos);
+            _delay_ms(10);
+        }
     }
 
 
