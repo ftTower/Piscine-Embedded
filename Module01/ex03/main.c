@@ -54,16 +54,14 @@ int main() {
     set_bit(&TCCR1B, CS10, true);  //! 
 
     while (1) {
-        if (read_bit(&PIND, PD4) && OCR1A > 1562) {
+        if (read_bit(&PIND, PD4) && OCR1A > 1562) { //? READ PD4 BUTTON
             wait_button(PD4);
-            OCR1A -= DUTY_CYCLE_STEP;
-            _delay_ms(20);
+            OCR1A -= DUTY_CYCLE_STEP; //! REDUCE DUTY CYCLE
         }
 
-        if (read_bit(&PIND, PD2) && OCR1A < ICR1) {
+        if (read_bit(&PIND, PD2) && OCR1A < ICR1) { //? READ PD2 BUTTON
             wait_button(PD2);
-            OCR1A += DUTY_CYCLE_STEP;
-            _delay_ms(20);
+            OCR1A += DUTY_CYCLE_STEP; //! INCREASE DUTY CYCLE
         }
     }
 

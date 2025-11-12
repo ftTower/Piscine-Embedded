@@ -11,7 +11,7 @@ void    set_bit(volatile uint8_t *regis, uint8_t bit, int state) {
 }
 int main() {
     
-    set_bit(&DDRB, PB1, true); //! SET PB1 DIRECTION TO OUTPUT (PB1 est la broche OC1A)
+    set_bit(&DDRB, PB1, true); //! SET PB1 DIRECTION TO OUTPUT
 
     //? CONFIGURATION FOR PWM (mode 14)
     set_bit(&TCCR1A, WGM11, true); //!
@@ -19,7 +19,7 @@ int main() {
     set_bit(&TCCR1B, WGM12, true); //!
 
     set_bit(&TCCR1A, COM1A1, true); //! TELL MICROCONTROLER WHAT TO DO WITH OCR1A (COM = Compare Output Mode)
-    set_bit(&TCCR1A, COM1A0, false); //! TCNT1 == BOTTOM(0) - HIGH -> TCNT1 == TOP(1562) - LOW -> TCNT1 <=>
+    set_bit(&TCCR1A, COM1A0, false); //! 
     
     ICR1 = 15624;  //! SET OVERFLOW SIZE (TOP)
     OCR1A = 1562;  //! (Output Compare Register 1A) SET THE DUTY CYCLE 

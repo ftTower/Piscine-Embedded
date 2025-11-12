@@ -8,7 +8,7 @@
 void    delayer(uint16_t ms) {
     volatile uint32_t total_iterations = (uint32_t)ms * ONE_MS_ITERATION_COUNT; //? PUT A VOLATILE TO LIMIT OPTIMISATION FOR UINT_32
 
-    for (volatile uint32_t i = 0; i < total_iterations; i++) {}
+    for (volatile uint32_t i = 0; i < total_iterations; i++) {} //! LOOP FOR MS TIME
 }
 
 void    set_bit(volatile uint8_t *regis, uint8_t bit, int state) {
